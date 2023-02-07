@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "module": "commonjs",
+    "target": "ES6",
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "strict": true,
+    "strictFunctionTypes": true,
+    "strictNullChecks": true,
+    "allowJs": true,
+    "rootDirs": ["src", "tests"],
+    "baseUrl": "src",
+    "paths": {
+      "~/tests/*": ["../tests/*"],
+      "~/*": ["*"]
+    }
+  },
+  "include": ["src", "tests"],
+  "exclude": []
+}
