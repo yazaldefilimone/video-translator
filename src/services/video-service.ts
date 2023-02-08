@@ -27,3 +27,18 @@ export const removeAudioFromVideo = ({ messages, file, outPutFilename }: removeA
   lastStep.run();
   return filePath;
 };
+
+export const addAudioFromVideo = (props: addAudioFromVideoInputType): string => {
+  const audioStatus = props.messages.audio;
+  const videoFolder = videosTranslatedFolder();
+  const filePath = `${videoFolder}/${props.videoFile}`;
+
+  const spinner = loading(audioStatus.initial);
+  const ffmpegCommandPrev = ffmpeg(props.videoFile).input(props.audioFile);
+  const ffmpegCommand = ffmpegCommandPrev.outputOptions("-c:v copy", "-map 0:v:0", "-map 1:a:0").output(filePath);
+
+  const lastStep = stepsService({ messageStep: audioStatus, spinner, ffmpegCommand });
+  lastStep.run();
+
+  return filePath;
+};
