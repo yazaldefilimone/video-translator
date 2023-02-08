@@ -4,5 +4,17 @@
   "main": "index.js",
   "repository": "git@github.com:yazaldefilimonepinto/video-translator.git",
   "author": "Yazalde Filimone <yazaldefilimon@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@deepgram/sdk": "^1.17.0",
+    "ffmpeg-extract-audio": "^1.0.2",
+    "fluent-ffmpeg": "^2.1.2"
+  },
+  "devDependencies": {
+    "@types/fluent-ffmpeg": "^2.1.20",
+    "@types/node": "^18.13.0",
+    "tsup": "^6.6.0",
+    "tsx": "^3.12.3",
+    "typescript": "^4.9.5"
+  }
 }

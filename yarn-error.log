@@ -1,0 +1,43 @@
+Arguments: 
+  /home/yazaldefilimone/.nvm/versions/node/v16.17.0/bin/node /home/yazaldefilimone/.nvm/versions/node/v16.17.0/bin/yarn add node-fluent-ffmpeg
+
+PATH: 
+  /home/yazaldefilimone/.nvm/versions/node/v16.17.0/bin:/home/yazaldefilimone/.local/share/zinit/polaris/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin:/usr/lib/jvm/java-1.11.0-openjdk-amd64/bin:/home/yazaldefilimone/Android/Sdk/emulator:/home/yazaldefilimone/Android/Sdk/tools:/home/yazaldefilimone/Android/Sdk/tools/bin:/home/yazaldefilimone/Android/Sdk/platform-tools
+
+Yarn version: 
+  1.22.19
+
+Node version: 
+  16.17.0
+
+Platform: 
+  linux x64
+
+Trace: 
+  Error: https://registry.yarnpkg.com/node-fluent-ffmpeg: Not found
+      at Request.params.callback [as _callback] (/home/yazaldefilimone/.nvm/versions/node/v16.17.0/lib/node_modules/yarn/lib/cli.js:66145:18)
+      at Request.self.callback (/home/yazaldefilimone/.nvm/versions/node/v16.17.0/lib/node_modules/yarn/lib/cli.js:140890:22)
+      at Request.emit (node:events:513:28)
+      at Request.<anonymous> (/home/yazaldefilimone/.nvm/versions/node/v16.17.0/lib/node_modules/yarn/lib/cli.js:141862:10)
+      at Request.emit (node:events:513:28)
+      at IncomingMessage.<anonymous> (/home/yazaldefilimone/.nvm/versions/node/v16.17.0/lib/node_modules/yarn/lib/cli.js:141784:12)
+      at Object.onceWrapper (node:events:627:28)
+      at IncomingMessage.emit (node:events:525:35)
+      at endReadableNT (node:internal/streams/readable:1358:12)
+      at processTicksAndRejections (node:internal/process/task_queues:83:21)
+
+npm manifest: 
+  {
+    "name": "video-translator",
+    "version": "1.0.0",
+    "main": "index.js",
+    "repository": "git@github.com:yazaldefilimonepinto/video-translator.git",
+    "author": "Yazalde Filimone <yazaldefilimon@gmail.com>",
+    "license": "MIT"
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile

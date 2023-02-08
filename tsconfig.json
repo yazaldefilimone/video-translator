@@ -5,7 +5,7 @@
     "target": "ES6",
     "esModuleInterop": true,
     "sourceMap": true,
-    "strict": true,
+    "strict": false,
     "strictFunctionTypes": true,
     "strictNullChecks": true,
     "allowJs": true,
