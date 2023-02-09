@@ -1,3 +1,4 @@
+import ora from "ora";
 import ffmpeg from "fluent-ffmpeg";
 import { env } from "~/shared/env";
 import { messageType } from "~/shared/messages";
@@ -16,16 +17,20 @@ export type addAudioFromVideoInputType = {
   messages: messageType;
 };
 
-export const removeAudioFromVideo = ({ messages, file, outPutFilename }: removeAudioFromVideoInputType): string => {
-  const videoStatus = messages.video;
-  const backupPathAudio = backupFolder();
-  const filePath = `${backupPathAudio}/${outPutFilename}.${env.extension.audio}`;
-  const spinner = loading(videoStatus.initial);
-
-  const ffmpegCommand = ffmpeg().input(file).output(filePath).audioCodec(env.extension.audio);
-  const lastStep = stepsService({ messageStep: videoStatus, spinner, ffmpegCommand });
-  lastStep.run();
-  return filePath;
+export const removeAudioFromVideo = async ({ messages, file, outPutFilename }: removeAudioFromVideoInputType) => {
+  const spinner = ora().start();
+  try {
+    const videoStatus = messages.video;
+    const backupPathAudio = backupFolder();
+    const filePath = `${backupPathAudio}/${outPutFilename}.${env.extension.audio}`;
+    const ffmpegCommand = ffmpeg(file).output(filePath).audioCodec(env.codec.audio);
+    const lastStep = stepsService({ messageStep: videoStatus, spinner, ffmpegCommand });
+    lastStep.run();
+    return filePath;
+  } catch (error) {
+    spinner.stop();
+    throw error;
+  }
 };
 
 export const addAudioFromVideo = (props: addAudioFromVideoInputType): string => {
@@ -33,10 +38,9 @@ export const addAudioFromVideo = (props: addAudioFromVideoInputType): string => 
   const videoFolder = videosTranslatedFolder();
   const filePath = `${videoFolder}/${props.videoFile}`;
 
-  const spinner = loading(audioStatus.initial);
+  const spinner = ora().start();
   const ffmpegCommandPrev = ffmpeg(props.videoFile).input(props.audioFile);
   const ffmpegCommand = ffmpegCommandPrev.outputOptions("-c:v copy", "-map 0:v:0", "-map 1:a:0").output(filePath);
-
   const lastStep = stepsService({ messageStep: audioStatus, spinner, ffmpegCommand });
   lastStep.run();
 
