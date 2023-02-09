@@ -5,14 +5,26 @@
   "repository": "git@github.com:yazaldefilimonepinto/video-translator.git",
   "author": "Yazalde Filimone <yazaldefilimon@gmail.com>",
   "license": "MIT",
+  "scripts": {
+    "dev": "npx tsx ./src/core/index.ts"
+  },
   "dependencies": {
     "@deepgram/sdk": "^1.17.0",
+    "@vitalets/google-translate-api": "^9.1.0",
+    "cli-spinners": "^2.7.0",
+    "dotenv": "^16.0.3",
     "ffmpeg-extract-audio": "^1.0.2",
-    "fluent-ffmpeg": "^2.1.2"
+    "fluent-ffmpeg": "^2.1.2",
+    "gtts": "^0.2.1",
+    "ora": "^6.1.2",
+    "srt-parser-2": "^1.2.2",
+    "terminal-kit": "^3.0.0"
   },
   "devDependencies": {
+    "@types/dotenv": "^8.2.0",
     "@types/fluent-ffmpeg": "^2.1.20",
     "@types/node": "^18.13.0",
+    "@types/terminal-kit": "^2.5.1",
     "tsup": "^6.6.0",
     "tsx": "^3.12.3",
     "typescript": "^4.9.5"
