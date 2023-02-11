@@ -36,8 +36,5 @@ export const stepsService = ({ messageStep, ffmpegCommand, spinner }: stepsServi
     serverError(error, "removeAudioFromVideo");
   });
 
-  ffmpegCommand.on("end", () => {
-    spinner.succeed(messageStep.end + `\n\n`);
-  });
   return ffmpegCommand;
 };
