@@ -1,9 +1,7 @@
-import { deepGram } from "~/settings/deepgram";
 import { gtts } from "~/settings/gtts";
-import { Line } from "srt-parser-2";
-
-import { backupFolder, readFileFolder, writeFileFolder } from "~/shared/utils/core-folders";
-import { readFile } from "node:fs/promises";
+import ora from "ora";
+import { assemblyRequestTranscriptAudioById, assemblyUploadAudioFileToTransplant } from "~/settings/assembly";
+import { domainEvent, eventsNames } from "~/core/domain-events";
 
 export type removeWorldsFromAudioInputType = {
   file: string;
@@ -11,46 +9,67 @@ export type removeWorldsFromAudioInputType = {
 };
 export type convertWorldsToAudioInputType = {
   outPutFilename: string;
-  worlds: Line[];
+  worlds: string[];
   language: string;
 };
 
-export const removeWorldsFromAudio = async (prop: removeWorldsFromAudioInputType) => {
+export const removeWorldsFromAudioPadding = async (prop: removeWorldsFromAudioInputType) => {
   try {
-    const nameFile = prop.file.split("/").at(-1)?.split(".")[0];
-    const bufferFile = await readFile(prop.file);
-    if (bufferFile) {
-      const audio = { buffer: bufferFile, mimetype: "audio/mp3" };
-      const response = await deepGram.transcription.preRecorded(audio);
-      const srt = response.toSRT();
-      const metadata = response.metadata;
-      const webVTT = response.toWebVTT();
-      const folder = backupFolder();
-      const promises = [
-        writeFileFolder(`${folder}/${nameFile}.srt`, JSON.stringify(srt)),
-        writeFileFolder(`${folder}/${nameFile}.webVTT`, JSON.stringify(webVTT)),
-        writeFileFolder(`${folder}/${nameFile}-metadata.json`, JSON.stringify(metadata)),
-      ];
-
-      await Promise.all(promises);
-
-      return `${folder}/${nameFile}.srt`;
+    const spinner = ora().start();
+    spinner.text = "Analisando a voz do audio...";
+    const response = await assemblyUploadAudioFileToTransplant(prop.file);
+    if (response.status === "error") {
+      spinner.fail("Ouve algum erro na analise a voz  do audio...");
+      domainEvent.emit(eventsNames.errors.internalError);
+      return;
+    }
+    if (response.status === "completed") {
+      domainEvent.emit(eventsNames.audio.removedWorlds, { id: response.id });
+      return;
+    }
+    if (response.status === "processing" || response.status === "queued") {
+      domainEvent.emit(eventsNames.audio.removePaddingWorlds, response);
+      return;
     }
   } catch (error) {
-    throw error;
+    domainEvent.emit(eventsNames.errors.internalError);
+  }
+};
+
+export const removeWorldsFromAudioListem = async (id: string) => {
+  try {
+    const spinner = ora().start();
+    spinner.text = "Reconhecendo as frases...";
+    const response = await assemblyRequestTranscriptAudioById(id);
+
+    if (response.sentences.length > 0) {
+      domainEvent.emit(eventsNames.audio.removedWorlds, response);
+      return;
+    }
+  } catch (error) {
+    domainEvent.emit(eventsNames.errors.internalError);
   }
 };
 
 export const convertWorldsToAudio = async (props: convertWorldsToAudioInputType) => {
-  const exets = props.worlds.map((str) => {
-    const gttService = gtts(str.text, "en");
-    const file = `${props.outPutFilename}/${str.id}.mp3`;
-    gttService.save(file, function (err: string | undefined) {
-      if (err) {
-        throw new Error(err);
-      }
+  try {
+    const spinner = ora().start();
+    const executeAsync = props.worlds.map((str, index, all) => {
+      const gttService = gtts(str, props.language);
+      const file = `${props.outPutFilename}/${index}.mp3`;
+      gttService.save(file, function (err: string | undefined) {
+        spinner.text = `Processando vozes... [${index}|${all.length}]`;
+        if (err) {
+          domainEvent.emit(eventsNames.errors.internalError);
+          return;
+        }
+      });
     });
-  });
 
-  Promise.all(exets);
+    await Promise.all(executeAsync);
+    spinner.succeed("Processo de vozes concluído!");
+    domainEvent.emit(eventsNames.audio.covertWorldToAudio);
+  } catch (error) {
+    domainEvent.emit(eventsNames.errors.error);
+  }
 };
