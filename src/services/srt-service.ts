@@ -2,9 +2,9 @@ import ora from "ora";
 import { domainEvent, eventsNames } from "~/core/domain-events";
 
 type words = Array<{
-  word: string;
-  startSec: number;
-  endSec: number;
+  text: string;
+  start: number;
+  end: number;
   confidence: number;
 }>;
 
@@ -15,8 +15,8 @@ export const convertWorldsToSrt = (entries: words) => {
   entries.forEach((entry, _, all) => {
     spinner.text = `Criando  legendas [${count}|${all.length}]`;
     srt += count + "\n";
-    srt += formatTime(entry.startSec) + " --> " + formatTime(entry.endSec) + "\n";
-    srt += entry.word + "\n\n";
+    srt += formatTime(entry.start) + " --> " + formatTime(entry.end) + "\n";
+    srt += entry.text + "\n\n";
     count++;
   });
   spinner.succeed("Legendas geradas com sucesso!!!");
