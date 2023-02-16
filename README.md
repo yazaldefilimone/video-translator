@@ -1,4 +1,3 @@
-### video-translator
-Translates video or audio into multiple languages ​​and generates the text translation
+### Video Translator
 
-MIT © [Yazalde Filimone](https://www.linkedin.com/in/yazalde-filimone/)
+[MIT](https://github.com/yazaldefilimonepinto/video-translator/blob/main/license) © [Yazalde Filimone](https://www.linkedin.com/in/yazalde-filimone/)
