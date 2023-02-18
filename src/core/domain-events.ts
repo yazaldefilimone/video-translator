@@ -18,7 +18,7 @@ export const eventsNames = {
   },
 
   translate: {
-    start: "start_translate",
+    end: "translated",
   },
   errors: {
     internalError: "server_error",
