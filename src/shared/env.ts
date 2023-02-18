@@ -11,10 +11,14 @@ export const env = {
   codec: {
     audio: "libmp3lame",
   },
-  deepGram: {
-    key: process.env.DEEPGRAM_KEY as string,
+  LEOPARD: {
+    accessKey: process.env.LEOPARD as string,
   },
   zensia: {
     key: process.env.ZENSIA_KEY as string,
+  },
+  assembly: {
+    authorization: process.env.ASSEMBLY_AUTH,
+    baseUrl: process.env.ASSEMBLY_BASE_URL,
   },
 };
