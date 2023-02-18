@@ -1,4 +1,5 @@
 import ora from "ora";
+import { stringifySync } from "subtitle";
 import { domainEvent, eventsNames } from "~/core/domain-events";
 
 type words = Array<{
@@ -8,17 +9,11 @@ type words = Array<{
   confidence: number;
 }>;
 
-export const convertWorldsToSrt = (entries: words) => {
+export const convertWorldsToSrt = (entries: any) => {
   const spinner = ora().start();
-  let srt = "";
   let count = 1;
-  entries.forEach((entry, _, all) => {
-    spinner.text = `Criando  legendas [${count}|${all.length}]`;
-    srt += count + "\n";
-    srt += formatTime(entry.start) + " --> " + formatTime(entry.end) + "\n";
-    srt += entry.text + "\n\n";
-    count++;
-  });
+
+  const srt = stringifySync(entries, { format: "SRT" });
   spinner.succeed("Legendas geradas com sucesso!!!");
   domainEvent.emit(eventsNames.subtitle.toSRT, srt);
 };
