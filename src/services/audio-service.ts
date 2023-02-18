@@ -1,15 +1,22 @@
-import { gtts } from "~/settings/gtts";
+import nodeGtts from "gtts";
 import ora from "ora";
 import { assemblyRequestTranscriptAudioById, assemblyUploadAudioFileToTransplant } from "~/settings/assembly";
 import { domainEvent, eventsNames } from "~/core/domain-events";
-
+import { mkdirSync, writeFileSync } from "fs";
 export type removeWorldsFromAudioInputType = {
   file: string;
   language: string;
 };
 export type convertWorldsToAudioInputType = {
   outPutFilename: string;
-  worlds: string[];
+  worlds: {
+    type: string;
+    data: {
+      start: number;
+      end: number;
+      text: string;
+    };
+  }[];
   language: string;
 };
 
@@ -27,10 +34,10 @@ export const removeWorldsFromAudioPadding = async (prop: removeWorldsFromAudioIn
       domainEvent.emit(eventsNames.audio.removedWorlds, { id: response.id });
       return;
     }
-    if (response.status === "processing" || response.status === "queued") {
+
+    setTimeout(() => {
       domainEvent.emit(eventsNames.audio.removePaddingWorlds, response);
-      return;
-    }
+    }, 3400);
   } catch (error) {
     domainEvent.emit(eventsNames.errors.internalError);
   }
@@ -54,22 +61,25 @@ export const removeWorldsFromAudioListem = async (id: string) => {
 export const convertWorldsToAudio = async (props: convertWorldsToAudioInputType) => {
   try {
     const spinner = ora().start();
-    const executeAsync = props.worlds.map((str, index, all) => {
-      const gttService = gtts(str, props.language);
+    mkdirSync(props.outPutFilename);
+
+    for (let index = 0; index < props.worlds.length; index++) {
+      const gttService = new nodeGtts(props.worlds[index].data.text ?? 'Erro nas palavrass', "pt");
       const file = `${props.outPutFilename}/${index}.mp3`;
       gttService.save(file, function (err: string | undefined) {
-        spinner.text = `Processando vozes... [${index}|${all.length}]`;
         if (err) {
-          domainEvent.emit(eventsNames.errors.internalError);
+          console.log({ err });
           return;
         }
       });
-    });
+    }
 
-    await Promise.all(executeAsync);
-    spinner.succeed("Processo de vozes concluído!");
-    domainEvent.emit(eventsNames.audio.covertWorldToAudio);
+    setTimeout(() => {
+      domainEvent.emit(eventsNames.audio.covertWorldToAudio, { file: props.outPutFilename, worlds: props.worlds });
+      spinner.succeed("Processo de vozes concluído!");
+    }, 10000);
   } catch (error) {
-    domainEvent.emit(eventsNames.errors.error);
+    console.log({ error });
+    // domainEvent.emit(eventsNames.errors.error);
   }
 };
