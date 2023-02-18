@@ -2,13 +2,14 @@ import ora from "ora";
 import ffmpeg from "fluent-ffmpeg";
 import { env } from "~/shared/env";
 import { messageType } from "~/shared/messages";
-import { backupFolder, videosTranslatedFolder } from "~/shared/utils/core-folders";
+import { backupFolder } from "~/shared/utils/core-folders";
 import { stepsService } from "./setps-servece";
 import { readdirSync } from "node:fs";
+import { domainEvent, eventsNames } from "~/core/domain-events";
+import { terminal } from "terminal-kit";
 
 export type removeAudioFromVideoInputType = {
   file: string;
-  outPutFilename: string;
   messages: messageType;
 };
 export type addAudioFromVideoInputType = {
@@ -23,21 +24,23 @@ export type addAudioFromVideoInputType = {
   };
   messages: messageType;
 };
-export const removeAudioFromVideo = async ({ messages, file, outPutFilename }: removeAudioFromVideoInputType) => {
+export const removeAudioFromVideo = async ({ messages, file }: removeAudioFromVideoInputType) => {
   const spinner = ora().start();
   try {
     const videoStatus = messages.video;
     const backupPathAudio = backupFolder();
-    const filePath = `${backupPathAudio}/${outPutFilename}.${env.extension.audio}`;
+    const filePath = `${backupPathAudio}/${file.split("/").at(-1)?.split(".")[0]}.${env.extension.audio}`;
     const ffmpegCommand = ffmpeg(file).output(filePath).audioCodec(env.codec.audio);
     const lastStep = stepsService({ messageStep: videoStatus, spinner, ffmpegCommand });
-    return {
-      lastStep,
-      spinner,
-      filePath,
-    };
+
+    lastStep.on("end", () => {
+      spinner.succeed(messages.video.end);
+      domainEvent.emit(eventsNames.audio.removedAudio, filePath);
+    });
+
+    lastStep.run();
   } catch (error) {
-    spinner.stop();
+    spinner.fail(error.message ?? "error");
     throw error;
   }
 };
@@ -45,21 +48,22 @@ export const removeAudioFromVideo = async ({ messages, file, outPutFilename }: r
 export const addAudioFromVideo = async (props: addAudioFromVideoInputType) => {
   const audioStatus = props.messages.audio;
   const dirs = readdirSync(props.audiosPath);
-  const spinner = ora().start();
+  const command = ffmpeg();
 
-  await Promise.all(
-    dirs.map(async (_file, index, all) => {
-      const ffmpegCommand = ffmpeg()
-        .input(props.videoFile)
-        .input(`${props.audiosPath}/${index}.mp3`)
-        .inputOptions([`-ss ${props.times[index].start}`, `-to ${props.times[index].end}`, "-c copy"])
-        .outputOptions(["-map 0:v", "-map 1:a", "-c:v copy", "-c:a aac"])
-        .save(props.outVideo);
-      const lastStep = stepsService({ messageStep: audioStatus, spinner, ffmpegCommand });
-      spinner.succeed(`Processado com sucesso: [${index}/${all.length}]`);
-      await lastStep.run();
-    })
-  );
+  dirs.forEach((audioInput, index) => {
+    command.input(`${props.audiosPath}/${index}.mp3`);
+    command.complexFilter(
+      `[${index}:a]atrim=start=${props.times[index].start}:end=${props.times[index].end},asetpts=PTS-STARTPTS[a${index}]`
+    );
+  });
 
-  return props.outVideo;
+  const concatFilters = dirs.map((audioInput, index) => `[a${index}]`).join("");
+  command.complexFilter(`${concatFilters}concat=n=${dirs.length}:v=0:a=1[outa]`);
+  command.audioCodec("libmp3lame");
+  command.complexFilter("[0:v][outa]amix=inputs=2[outv]");
+  command.outputOptions("-c:v copy").output(`${props.outVideo}/${props.videoFile.split("/").at(-1)}`);
+  command.on("end", () => {
+    domainEvent.emit("finish", `${props.outVideo}/${props.videoFile.split("/").at(-1)}`);
+  });
+  command.run();
 };
