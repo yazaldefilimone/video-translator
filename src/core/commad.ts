@@ -1,75 +1,64 @@
 import { terminal } from "terminal-kit";
 import { message } from "~/shared/messages";
 const serverError = "Internal Error, try again later";
-const command = async () => {
-  terminal.clear();
-  const languageOptionsSystem = ["pt", "en"];
-  const languageOptions = ["1. Português", "2. English"];
-  const comm = new Map();
-
-  terminal.singleColumnMenu(languageOptions, function (error, response) {
-    if (error) {
-      terminal.red(serverError);
-      process.exit();
-    }
-    const c = languageOptionsSystem[response.selectedIndex] as "en" | "pt";
-    const messages = message[c];
-
-    terminal(messages.terminal.file);
-    terminal.fileInput({ baseDir: "../" }, function (error, input) {
-      if (error) {
-        terminal.red(serverError);
-        process.exit();
-      }
-      comm.set("file", input);
-      terminal("Do you like javascript? [Y|n]\n");
-
-      terminal.yesOrNo({ yes: ["Y", "ENTER"], no: ["n"] }, function (error, result) {});
-      process.exit();
-    });
+import { intro, outro, confirm, select, spinner, isCancel, cancel, text } from "@clack/prompts";
+import { setTimeout as sleep } from "node:timers/promises";
+import color from "picocolors";
+import { readdirSync } from "node:fs";
+const rootPath = "/home/yazaldefilimone/www/learnspace/video-translator/videos";
+async function main() {
+  console.log();
+  intro(color.inverse("video translator"));
+  const files = readdirSync(rootPath);
+  const options = files.map((file) => ({ value: `${rootPath}/${file}`, label: file }));
+  const video = await select({
+    message: "Select video file in root folder:",
+    options,
   });
-};
+  console.log({ video });
+  const name = await text({
+    message: "What is your name?",
+    placeholder: "Anonymous",
+  });
 
-command().then();
-// terminal("Choose a file: ");
+  if (isCancel(name)) {
+    cancel("Operation cancelled");
+    return process.exit(0);
+  }
 
-// terminal.fileInput({ baseDir: "../" }, function (error, input) {
-//   if (error) {
-//     terminal.red.bold("\nAn error occurs: " + error + "\n");
-//   } else {
-//     terminal.green("\nYour file is '%s'\n", input);
-//   }
-//   process.exit();
-// });
+  const shouldContinue = await confirm({
+    message: "Do you want to continue?",
+  });
 
-// var items = ["a. Go south", "b. Go west", "c. Go back to the street"];
+  if (isCancel(shouldContinue)) {
+    cancel("Operation cancelled");
+    return process.exit(0);
+  }
 
-// terminal.singleColumnMenu(items, function (error, response) {
-//   terminal("\n").eraseLineAfter.green(
-//     "#%s selected: %s (%s,%s)\n",
-//     response.selectedIndex,
-//     response.selectedText,
-//     response.x,
-//     response.y
-//   );
-//   process.exit();
-// });
-// terminal.clear();
+  const projectType = await select({
+    message: "Pick a project type.",
+    options: [
+      { value: "ts", label: "TypeScript" },
+      { value: "js", label: "JavaScript" },
+      { value: "coffee", label: "CoffeeScript", hint: "oh no" },
+    ],
+  });
 
-// function question() {
-//   terminal("Do you like javascript? [Y|n]\n");
+  if (isCancel(projectType)) {
+    cancel("Operation cancelled");
+    return process.exit(0);
+  }
 
-//   // Exit on y and ENTER key
-//   // Ask again on n
-//   terminal.yesOrNo({ yes: ["y", "ENTER"], no: ["n"] }, function (error, result) {
-//     if (result) {
-//       terminal.green("'Yes' detected! Good bye!\n");
-//       process.exit();
-//     } else {
-//       terminal.red("'No' detected, are you sure?\n");
-//       question();
-//     }
-//   });
-// }
+  const s = spinner();
+  s.start("Installing via npm");
 
-// question();
+  await sleep(3000);
+
+  s.stop("Installed via npm");
+
+  outro("You're all set!");
+
+  await sleep(1000);
+}
+
+main().catch(console.error);
