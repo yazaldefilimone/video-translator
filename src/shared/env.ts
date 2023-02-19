@@ -21,4 +21,5 @@ export const env = {
     authorization: process.env.ASSEMBLY_AUTH,
     baseUrl: process.env.ASSEMBLY_BASE_URL,
   },
+  narakeet_auth: process.env.NARAKEET_AUTH as string,
 };
