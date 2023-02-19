@@ -1,8 +1,12 @@
 import nodeGtts from "gtts";
-import ora from "ora";
+import { pipeline } from "node:stream/promises";
+import { createWriteStream } from "node:fs";
+import { Readable } from "stream";
+import got from "got";
 import { assemblyRequestTranscriptAudioById, assemblyUploadAudioFileToTransplant } from "~/settings/assembly";
 import { domainEvent, eventsNames } from "~/core/domain-events";
 import { mkdirSync, writeFileSync } from "fs";
+import { env } from "~/shared/env";
 export type removeWorldsFromAudioInputType = {
   file: string;
   language: string;
@@ -22,11 +26,8 @@ export type convertWorldsToAudioInputType = {
 
 export const removeWorldsFromAudioPadding = async (prop: removeWorldsFromAudioInputType) => {
   try {
-    const spinner = ora().start();
-    spinner.text = "Analisando a voz do audio...";
     const response = await assemblyUploadAudioFileToTransplant(prop.file);
     if (response.status === "error") {
-      spinner.fail("Ouve algum erro na analise a voz  do audio...");
       domainEvent.emit(eventsNames.errors.internalError);
       return;
     }
@@ -45,8 +46,6 @@ export const removeWorldsFromAudioPadding = async (prop: removeWorldsFromAudioIn
 
 export const removeWorldsFromAudioListem = async (id: string) => {
   try {
-    const spinner = ora().start();
-    spinner.text = "Reconhecendo as frases...";
     const response = await assemblyRequestTranscriptAudioById(id);
 
     if (response.sentences.length > 0) {
@@ -60,23 +59,26 @@ export const removeWorldsFromAudioListem = async (id: string) => {
 
 export const convertWorldsToAudio = async (props: convertWorldsToAudioInputType) => {
   try {
-    const spinner = ora().start();
     mkdirSync(props.outPutFilename);
 
     for (let index = 0; index < props.worlds.length; index++) {
-      const gttService = new nodeGtts(props.worlds[index].data.text ?? 'Erro nas palavrass', "pt");
+      const voice = "agueda";
       const file = `${props.outPutFilename}/${index}.mp3`;
-      gttService.save(file, function (err: string | undefined) {
-        if (err) {
-          console.log({ err });
-          return;
-        }
-      });
+      await pipeline(
+        Readable.from([props.worlds[index].data.text]),
+        got.stream.post(`https://api.narakeet.com/text-to-speech/mp3?voice=${voice}`, {
+          headers: {
+            accept: "application/octet-stream",
+            "x-api-key": env.narakeet_auth,
+            "content-type": "text/plain",
+          },
+        }),
+        createWriteStream(file)
+      );
     }
 
     setTimeout(() => {
       domainEvent.emit(eventsNames.audio.covertWorldToAudio, { file: props.outPutFilename, worlds: props.worlds });
-      spinner.succeed("Processo de vozes concluído!");
     }, 10000);
   } catch (error) {
     console.log({ error });
