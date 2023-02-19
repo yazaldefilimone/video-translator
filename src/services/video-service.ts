@@ -1,4 +1,3 @@
-import ora from "ora";
 import ffmpeg from "fluent-ffmpeg";
 import { env } from "~/shared/env";
 import { messageType } from "~/shared/messages";
@@ -16,54 +15,70 @@ export type addAudioFromVideoInputType = {
   audiosPath: string;
   videoFile: string;
   outVideo: string;
-  times: {
-    [key: number]: {
-      start: number;
-      end: number;
-    };
-  };
-  messages: messageType;
+  times: any;
 };
 export const removeAudioFromVideo = async ({ messages, file }: removeAudioFromVideoInputType) => {
-  const spinner = ora().start();
   try {
     const videoStatus = messages.video;
     const backupPathAudio = backupFolder();
     const filePath = `${backupPathAudio}/${file.split("/").at(-1)?.split(".")[0]}.${env.extension.audio}`;
     const ffmpegCommand = ffmpeg(file).output(filePath).audioCodec(env.codec.audio);
-    const lastStep = stepsService({ messageStep: videoStatus, spinner, ffmpegCommand });
+    const lastStep = stepsService({ messageStep: videoStatus, ffmpegCommand });
 
     lastStep.on("end", () => {
-      spinner.succeed(messages.video.end);
       domainEvent.emit(eventsNames.audio.removedAudio, filePath);
     });
 
     lastStep.run();
   } catch (error) {
-    spinner.fail(error.message ?? "error");
     throw error;
   }
 };
 
 export const addAudioFromVideo = async (props: addAudioFromVideoInputType) => {
-  const audioStatus = props.messages.audio;
   const dirs = readdirSync(props.audiosPath);
-  const command = ffmpeg();
+  const audios = dirs.map((dir, index) => ({ audioFile: `${props.audiosPath}/${dir}` }));
+  const outputPath = "/home/yazaldefilimone/www/learnspace/video-translator/building/outputPath.mp3";
+  // const audio = mergeAudios(audios, outputPath);
+  let ffmpegCommand = ffmpeg();
 
-  dirs.forEach((audioInput, index) => {
-    command.input(`${props.audiosPath}/${index}.mp3`);
-    command.complexFilter(
-      `[${index}:a]atrim=start=${props.times[index].start}:end=${props.times[index].end},asetpts=PTS-STARTPTS[a${index}]`
-    );
+  for (let i = 0; i < audios.length; i++) {
+    const audio = audios[i];
+    ffmpegCommand
+      .input(audio.audioFile)
+      // .seekInput(audio.start)
+      // .duration(audio.end - audio.start)
+      .audioCodec("libmp3lame");
+  }
+
+  ffmpegCommand.mergeToFile(outputPath);
+  ffmpegCommand.output(outputPath);
+  ffmpegCommand.on("error", () => {
+    console.log("error in audio");
   });
 
-  const concatFilters = dirs.map((audioInput, index) => `[a${index}]`).join("");
-  command.complexFilter(`${concatFilters}concat=n=${dirs.length}:v=0:a=1[outa]`);
-  command.audioCodec("libmp3lame");
-  command.complexFilter("[0:v][outa]amix=inputs=2[outv]");
-  command.outputOptions("-c:v copy").output(`${props.outVideo}/${props.videoFile.split("/").at(-1)}`);
-  command.on("end", () => {
-    domainEvent.emit("finish", `${props.outVideo}/${props.videoFile.split("/").at(-1)}`);
+  ffmpegCommand.on("end", () => {
+    setTimeout(() => {
+      domainEvent.emit("created", { outputPath });
+    }, 2000);
   });
-  command.run();
+
+  ffmpegCommand.run();
 };
+
+function mergeAudios(audios, outputPath) {
+  let ffmpegCommand = ffmpeg();
+
+  for (let i = 0; i < audios.length; i++) {
+    const audio = audios[i];
+    ffmpegCommand
+      .input(audio.audioFile)
+      // .seekInput(audio.start)
+      // .duration(audio.end - audio.start)
+      .audioCodec("libmp3lame");
+  }
+
+  ffmpegCommand.mergeToFile(outputPath);
+  ffmpegCommand.output(outputPath);
+  return ffmpegCommand;
+}

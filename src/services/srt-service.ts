@@ -10,11 +10,9 @@ type words = Array<{
 }>;
 
 export const convertWorldsToSrt = (entries: any) => {
-  const spinner = ora().start();
   let count = 1;
 
   const srt = stringifySync(entries, { format: "SRT" });
-  spinner.succeed("Legendas geradas com sucesso!!!");
   domainEvent.emit(eventsNames.subtitle.toSRT, srt);
 };
 

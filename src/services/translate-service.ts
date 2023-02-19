@@ -1,7 +1,6 @@
 import { LeopardWord } from "@picovoice/leopard-node";
 import { translate } from "@vitalets/google-translate-api";
 import createHttpProxyAgent from "http-proxy-agent";
-import ora from "ora";
 import puppeteer from "puppeteer";
 import { terminal } from "terminal-kit";
 import { domainEvent, eventsNames } from "~/core/domain-events";
@@ -33,7 +32,6 @@ export const tranasteText = async (props: tranasteTextInputType) => {
     };
   }>();
   for (const word of props.words) {
-    console.log(word.data.text);
     await chromePage.type(`textarea`, word.data.text);
     await chromePage.waitForSelector(selector);
 
