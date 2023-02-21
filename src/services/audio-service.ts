@@ -7,6 +7,7 @@ import { assemblyRequestTranscriptAudioById, assemblyUploadAudioFileToTransplant
 import { domainEvent, eventsNames } from "~/core/domain-events";
 import { mkdirSync, writeFileSync } from "fs";
 import { env } from "~/shared/env";
+import { outro } from "@clack/prompts";
 export type removeWorldsFromAudioInputType = {
   file: string;
   language: string;
@@ -81,7 +82,7 @@ export const convertWorldsToAudio = async (props: convertWorldsToAudioInputType)
       domainEvent.emit(eventsNames.audio.covertWorldToAudio, { file: props.outPutFilename, worlds: props.worlds });
     }, 10000);
   } catch (error) {
-    console.log({ error });
-    // domainEvent.emit(eventsNames.errors.error);
+    outro(`Internal Error: ${error.toString()}`);
+    process.exit();
   }
 };

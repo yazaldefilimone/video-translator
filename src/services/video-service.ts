@@ -38,7 +38,7 @@ export const removeAudioFromVideo = async ({ messages, file }: removeAudioFromVi
 export const addAudioFromVideo = async (props: addAudioFromVideoInputType) => {
   const dirs = readdirSync(props.audiosPath);
   const audios = dirs.map((dir, index) => ({ audioFile: `${props.audiosPath}/${dir}` }));
-  const outputPath = "/home/yazaldefilimone/www/learnspace/video-translator/building/outputPath.mp3";
+  const outputPath = props.outVideo + "/outputPath.mp3";
   // const audio = mergeAudios(audios, outputPath);
   let ffmpegCommand = ffmpeg();
 
